@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 
-class Employee extends Model
+class Employee extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
-    // ✅ Allow these fields to be mass assigned
     protected $fillable = [
         'name',
         'email',
@@ -19,15 +19,10 @@ class Employee extends Model
         'position',
     ];
 
-    // ✅ Hide sensitive fields when returning JSON
     protected $hidden = [
         'password',
+        'remember_token',
     ];
-
-    // ✅ Each employee can have many attendance records
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class);
-    }
 }
+
 
