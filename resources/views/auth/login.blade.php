@@ -7,7 +7,7 @@
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     <style>
         body {
-            background: url('{{ asset('images/wcf-bg.jpg') }}') no-repeat center center fixed;
+            background: url('{{ asset('images/wcf_bg.jpg') }}') no-repeat center center fixed;
             background-size: cover;
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -16,13 +16,16 @@
             justify-content: center;
             align-items: center;
             color: #333;
+            position: relative;
         }
 
+        /* Soft transparent overlay for clarity */
         .overlay {
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(2px);
             z-index: 0;
         }
 
@@ -37,10 +40,10 @@
         }
 
         .login-card {
-            background: rgba(255, 255, 255, 0.92);
-            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 18px;
             padding: 40px 35px;
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 35px rgba(0, 0, 0, 0.3);
             width: 400px;
             max-width: 95%;
             animation: fadeIn 0.7s ease;
@@ -53,18 +56,24 @@
 
         .logo {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .logo img {
-            height: 80px;
+            height: 85px;
+            width: 85px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #004884;
+            background: white;
+            box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
         }
 
         h4 {
             text-align: center;
             color: #003366;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         label {
@@ -123,7 +132,7 @@
     <div class="login-container">
         <div class="login-card">
             <div class="logo">
-                <img src="{{ asset('images/wcf-logo.png') }}" alt="WCF Logo">
+                <img src="{{ asset('images/wcf_logo.png') }}" alt="WCF Logo">
             </div>
             <h4>Sign in to Attendance System</h4>
 
@@ -155,5 +164,6 @@
     </footer>
 </body>
 </html>
+
 
 
