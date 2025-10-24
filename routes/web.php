@@ -21,5 +21,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:employee')->group(function () {
         Route::get('/employee/dashboard', [App\Http\Controllers\EmployeeController::class, 'index'])->name('employee.dashboard');
     });
+
 });
 
