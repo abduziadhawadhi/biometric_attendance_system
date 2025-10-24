@@ -10,56 +10,41 @@ use App\Http\Controllers\AttendanceController;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
 */
 
-// Redirect root URL to login page
 Route::get('/', function () {
     return redirect('/login');
 });
 
-// Laravel default authentication routes
+// Laravel built-in authentication
 Auth::routes();
 
-// Routes accessible only after login
+// Protected routes (require login)
 Route::middleware(['auth'])->group(function () {
 
-    // Redirect user to dashboard depending on role
+    // Redirect based on user role
     Route::get('/dashboard', function () {
-        return auth()->user()->role === 'admin'
-            ? redirect('/admin/dashboard')
-            : redirect('/employee/dashboard');
+        if (auth()->user()->role === 'admin') {
+            return redirect('/admin/dashboard');
+        } else {
+            return redirect('/employee/dashboard');
+        }
     })->name('dashboard');
 
-    /*
-    |--------------------------------------------------------------------------
-    | Admin Routes
-    |--------------------------------------------------------------------------
-    */
+    // Admin dashboard
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Employee Routes
-    |--------------------------------------------------------------------------
-    */
+    // Employee dashboard
     Route::middleware(['role:employee'])->group(function () {
         Route::get('/employee/dashboard', [EmployeeController::class, 'index'])->name('employee.dashboard');
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | Attendance Routes (Check In / Check Out)
-    |--------------------------------------------------------------------------
-    */
+    // Attendance routes
     Route::post('/attendance/checkin', [AttendanceController::class, 'checkIn'])->name('attendance.checkin');
     Route::post('/attendance/checkout', [AttendanceController::class, 'checkOut'])->name('attendance.checkout');
 });
+
 
 
