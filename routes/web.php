@@ -1,6 +1,13 @@
 <?php
 
 
+
+Route::get('/test', function () {
+    return '✅ Laravel is running fine!';
+});
+
+
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AdminController;
