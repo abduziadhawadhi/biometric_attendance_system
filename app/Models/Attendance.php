@@ -26,3 +26,5 @@ class Attendance extends Model
     }
 }
 
+
+
