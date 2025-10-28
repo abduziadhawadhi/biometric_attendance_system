@@ -5,55 +5,71 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Attendance;
 use App\Models\Employee;
-use App\Exports\AttendanceExport;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AttendanceExport;
 
 class AdminController extends Controller
 {
+    /**
+     * Display the admin dashboard with filters, stats, and export.
+     */
     public function index(Request $request)
     {
-        // Filters
+        // Get filter inputs
         $employeeName = $request->input('employee_name');
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        // Base query
+        // Get today’s date
+        $today = Carbon::today()->toDateString();
+
+        // Base query for attendance
         $query = Attendance::with('employee');
 
+        // ✅ Filter by employee name if provided
         if ($employeeName) {
             $query->whereHas('employee', function ($q) use ($employeeName) {
                 $q->where('name', 'LIKE', "%{$employeeName}%");
             });
         }
 
+        // ✅ Filter by date range if provided
         if ($startDate && $endDate) {
-            $query->whereBetween('date', [$startDate, $endDate]);
+            // Change 'check_in' to your correct date column name if different
+            $query->whereBetween('check_in', [$startDate, $endDate]);
         }
 
-        $attendances = $query->orderBy('date', 'desc')->paginate(10);
+        // ✅ Fetch attendance records (paginated)
+        $attendances = $query->orderBy('check_in', 'desc')->paginate(10);
 
-        // Dashboard stats
+        // ✅ Dashboard stats
         $totalEmployees = Employee::count();
-        $presentToday = Attendance::whereDate('date', today())->count();
+
+        // Change 'check_in' to your actual date column
+        $presentToday = Attendance::whereDate('check_in', $today)->count();
+
+        // If you store status (e.g., present/absent), use this
         $absentToday = $totalEmployees - $presentToday;
 
+        // ✅ Pass data to the view
         return view('admin.dashboard', compact(
             'attendances',
-            'employeeName',
-            'startDate',
-            'endDate',
             'totalEmployees',
             'presentToday',
-            'absentToday'
+            'absentToday',
+            'employeeName',
+            'startDate',
+            'endDate'
         ));
     }
 
+    /**
+     * Export attendance data to Excel file.
+     */
     public function export(Request $request)
     {
-        $employeeName = $request->input('employee_name');
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-
-        return Excel::download(new AttendanceExport($employeeName, $startDate, $endDate), 'attendance_report.xlsx');
+        return Excel::download(new AttendanceExport($request), 'attendance_report.xlsx');
     }
 }
+
