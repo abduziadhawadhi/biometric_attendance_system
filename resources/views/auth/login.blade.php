@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WCF Biometric Attendance | Login</title>
-    
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+
+    <!-- ✅ Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+    <!-- ✅ Include your custom CSS -->
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+
     <style>
         body {
             background: url('{{ asset('images/wcf_bg.jpg') }}') no-repeat center center fixed;
@@ -20,7 +25,6 @@
             position: relative;
         }
 
-        /* Soft transparent overlay for clarity */
         .overlay {
             position: fixed;
             top: 0; left: 0;
@@ -163,8 +167,13 @@
     <footer>
         &copy; {{ date('Y') }} Workers Compensation Fund (WCF). All rights reserved.
     </footer>
+
+    <!-- ✅ Include JS scripts at the bottom -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ asset('js/app.js') }}"></script>
 </body>
 </html>
+
 
 
 
