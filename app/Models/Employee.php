@@ -2,30 +2,29 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
-class Employee extends Model
+class Employee extends Authenticatable
 {
-    use HasFactory;
+    use Notifiable;
+
+    protected $table = 'employees'; // make sure this matches your DB table name
 
     protected $fillable = [
         'name',
         'email',
+        'password',
         'department',
-        'position',
-        'employee_number',
-        'role', // 'admin' or 'employee'
+        'role',
     ];
 
-    /**
-     * An employee can have many attendance records.
-     */
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class, 'employee_id');
-    }
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 }
+
 
 
 
