@@ -52,9 +52,7 @@
     <!-- Attendance Table -->
     <div class="card shadow-sm">
         <div class="card-body">
-            <a href="" class="btn btn-success">
-            <i class="bi bi-file-earmark-excel"></i> Export to Excel
-        </a>
+            
             <h5>All Employees</h5>
             <table class="table table-hover mt-3">
                 <thead class="table-dark">
@@ -67,16 +65,16 @@
                 </thead>
                 <tbody>
                     @forelse ($allEmployees as $employee)
-                        <tr>
-                            <td>{{ $employee->name ?? 'N/A' }}</td>
-                            <td>{{ $employee->department ?? 'N/A' }}</td>
-                            <td>{{ $employee->email }}</td>
-                            <td>{{ $employee->position }}</td>
-                        </tr>
+                    <tr>
+                        <td>{{ $employee->name ?? 'N/A' }}</td>
+                        <td>{{ $employee->department ?? 'N/A' }}</td>
+                        <td>{{ $employee->email }}</td>
+                        <td>{{ $employee->position }}</td>
+                    </tr>
                     @empty
-                        <tr>
-                            <td colspan="6" class="text-center text-muted">No attendance records found.</td>
-                        </tr>
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No attendance records found.</td>
+                    </tr>
                     @endforelse
                 </tbody>
             </table>
@@ -84,5 +82,3 @@
     </div>
 </div>
 @endsection
-
-
