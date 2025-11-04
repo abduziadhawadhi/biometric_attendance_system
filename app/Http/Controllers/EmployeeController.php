@@ -4,23 +4,26 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Employee;
-use App\Models\Attendance;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class EmployeeController extends Controller
 {
-    /**
-     * Show form to create a new employee.
-     */
-    public function create()
+    // Show employee dashboard
+    public function dashboard()
     {
-        return view('employees.create');
+        $employee = auth()->user();
+        $attendances = $employee->attendances()->latest()->get();
+
+        return view('employee.dashboard', compact('employee', 'attendances'));
     }
 
-    /**
-     * Store a newly created employee in the database.
-     */
+    // Show add employee form
+    public function create()
+    {
+        return view('admin.add_employee');
+    }
+
+    // Store new employee
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -41,19 +44,6 @@ class EmployeeController extends Controller
 
         return redirect()->route('admin.dashboard')->with('success', 'Employee added successfully!');
     }
-
-    /**
-     * Employee dashboard – shows only their own attendance records.
-     */
-    public function dashboard()
-    {
-        $employee = Auth::user();
-
-        $attendances = Attendance::where('employee_id', $employee->id)
-            ->orderBy('check_in', 'desc')
-            ->paginate(10);
-
-        return view('employee.dashboard', compact('employee', 'attendances'));
-    }
 }
+
 
