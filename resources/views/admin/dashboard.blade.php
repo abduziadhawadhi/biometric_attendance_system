@@ -44,7 +44,7 @@
 
     <!-- Export Button -->
     <div class="text-end mb-3">
-        <a href="{{ route('admin.export', request()->all()) }}" class="btn btn-success">
+        <a href="" class="btn btn-success">
             <i class="bi bi-file-earmark-excel"></i> Export to Excel
         </a>
     </div>
@@ -52,27 +52,26 @@
     <!-- Attendance Table -->
     <div class="card shadow-sm">
         <div class="card-body">
-            <h5>Attendance Records</h5>
+            <a href="" class="btn btn-success">
+            <i class="bi bi-file-earmark-excel"></i> Export to Excel
+        </a>
+            <h5>All Employees</h5>
             <table class="table table-hover mt-3">
                 <thead class="table-dark">
                     <tr>
                         <th>Employee Name</th>
                         <th>Department</th>
-                        <th>Date</th>
-                        <th>Check In</th>
-                        <th>Check Out</th>
-                        <th>Status</th>
+                        <th>Email</th>
+                        <th>Position</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse ($attendances as $attendance)
+                    @forelse ($allEmployees as $employee)
                         <tr>
-                            <td>{{ $attendance->employee->name ?? 'N/A' }}</td>
-                            <td>{{ $attendance->employee->department ?? 'N/A' }}</td>
-                            <td>{{ $attendance->date }}</td>
-                            <td>{{ $attendance->check_in }}</td>
-                            <td>{{ $attendance->check_out }}</td>
-                            <td>{{ ucfirst($attendance->status) }}</td>
+                            <td>{{ $employee->name ?? 'N/A' }}</td>
+                            <td>{{ $employee->department ?? 'N/A' }}</td>
+                            <td>{{ $employee->email }}</td>
+                            <td>{{ $employee->position }}</td>
                         </tr>
                     @empty
                         <tr>
@@ -81,9 +80,6 @@
                     @endforelse
                 </tbody>
             </table>
-            <div class="d-flex justify-content-center">
-                {{ $attendances->links() }}
-            </div>
         </div>
     </div>
 </div>

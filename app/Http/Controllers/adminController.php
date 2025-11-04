@@ -41,8 +41,10 @@ class AdminController extends Controller
         }
 
         // ✅ Fetch attendance records (paginated)
-        $attendances = $query->orderBy('check_in', 'desc')->paginate(10);
-
+        $allEmployees = Employee::all();
+        // $allEmployees = Employee::get();
+        // $admin = Employee::where('email', 'admin@wcf.go.tz')->first();
+// dd($allEmployees->toArray());
         // ✅ Dashboard stats
         $totalEmployees = Employee::count();
 
@@ -54,7 +56,7 @@ class AdminController extends Controller
 
         // ✅ Pass data to the view
         return view('admin.dashboard', compact(
-            'attendances',
+            'allEmployees',
             'totalEmployees',
             'presentToday',
             'absentToday',
