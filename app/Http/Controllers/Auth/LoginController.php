@@ -13,13 +13,59 @@ class LoginController extends Controller
     | Login Controller
     |--------------------------------------------------------------------------
     |
-    | This controller handles authenticating users and redirecting them to
-    | their respective dashboards after login. It uses the AuthenticatesUsers
-    | trait to provide the core authentication functionality.
+    | This controller handles authenticating users for the application and
+    | redirecting them to the correct dashboard based on their role.
     |
     */
 
     use AuthenticatesUsers;
+
+    /**
+     * Determine where to redirect users after login based on their role.
+     *
+     * @return string
+     */
+    protected function redirectTo()
+    {
+        $user = auth()->user();
+
+        if ($user->role === 'admin') {
+            return '/admin/dashboard';
+        }
+
+        if ($user->role === 'employee') {
+            return '/employee/dashboard';
+        }
+
+        // Fallback in case a user has no role assigned
+        return '/login';
+    }
+
+    /**
+     * Show the application's login form.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function showLoginForm()
+    {
+        return view('auth.login');
+    }
+
+    /**
+     * Handle user logout and redirect to login page.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function logout(Request $request)
+    {
+        $this->guard()->logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/login')->with('status', 'You have been logged out successfully.');
+    }
 
     /**
      * Create a new controller instance.
@@ -28,30 +74,9 @@ class LoginController extends Controller
      */
     public function __construct()
     {
-        // Allow only guests to access login; authenticated users can only logout
+        // Guests can only access login, authenticated users can log out
         $this->middleware('guest')->except('logout');
-        $this->middleware('auth')->only('logout');
-    }
-
-    /**
-     * Handle post-login redirection based on user role.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  mixed  $user
-     * @return \Illuminate\Http\Response
-     */
-    protected function authenticated(Request $request, $user)
-    {
-        if ($user->role === 'admin') {
-            return redirect('/admin/dashboard');
-        }
-
-        if ($user->role === 'employee') {
-            return redirect('/employee/dashboard');
-        }
-
-        // fallback (if role missing or undefined)
-        return redirect('/dashboard');
     }
 }
+
 
