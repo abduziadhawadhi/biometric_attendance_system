@@ -36,6 +36,17 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Employee Management Routes
     Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
     Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+
+    use App\Http\Controllers\AttendanceController;
+
+Route::middleware(['auth', 'role:employee'])->group(function () {
+    Route::get('/employee/dashboard', [EmployeeController::class, 'dashboard'])->name('employee.dashboard');
+
+    // Add these 2 routes 👇
+    Route::post('/attendance/checkin', [AttendanceController::class, 'checkIn'])->name('attendance.checkin');
+    Route::post('/attendance/checkout', [AttendanceController::class, 'checkOut'])->name('attendance.checkout');
+});
+
 });
 
 // ====================== EMPLOYEE ROUTES ======================
