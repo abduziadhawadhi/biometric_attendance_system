@@ -9,13 +9,14 @@ class Attendance extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'employee_id',
-        'date',
-        'check_in',
-        'check_out',
-        'status', // e.g. "present", "absent", "late"
-    ];
+   protected $fillable = [
+    'employee_id',
+    'attendance_date',
+    'check_in',
+    'check_out',
+    'status'
+];
+
 
     /**
      * Each attendance record belongs to one employee.
