@@ -139,7 +139,7 @@
             <div class="logo">
                 <img src="{{ asset('images/wcf_logo.png') }}" alt="WCF Logo">
             </div>
-            <h4>Sign in to Attendance System</h4>
+            <h4>Attendance Management System</h4>
 
             @if (session('error'))
                 <div class="alert alert-danger text-center">{{ session('error') }}</div>
