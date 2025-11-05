@@ -12,7 +12,7 @@ class EmployeeController extends Controller
     public function dashboard()
     {
         $employee = auth()->user();
-        $attendances = $employee->attendances()->latest()->get();
+       $attendances = $employee->attendances()->latest()->paginate(10);
 
         return view('employee.dashboard', compact('employee', 'attendances'));
     }
