@@ -2,70 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Attendance;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class AdminController extends Controller
 {
     public function index(Request $request)
     {
-        // Filters
-        $employeeName = $request->get('employee_name');
-        $startDate = $request->get('start_date');
-        $endDate = $request->get('end_date');
+        // --- Filtering Inputs ---
+        $employeeName = $request->employee_name;
+        $startDate = $request->start_date;
+        $endDate = $request->end_date;
 
-        // Today's Date
-        $today = Carbon::today()->toDateString();
+        // --- Attendance Query ---
+        $query = Attendance::with('employee');
 
-        // ======================
-        // Dashboard Summary
-        // ======================
+        // Filter by Employee Name
+        if (!empty($employeeName)) {
+            $query->whereHas('employee', function ($q) use ($employeeName) {
+                $q->where('name', 'LIKE', "%$employeeName%");
+            });
+        }
 
-        // Total Employees
+        // Filter by Date Range using created_at
+        if (!empty($startDate) && !empty($endDate)) {
+            $query->whereDate('created_at', '>=', $startDate)
+                  ->whereDate('created_at', '<=', $endDate);
+        }
+
+        $attendances = $query->orderBy('created_at', 'DESC')->paginate(10);
+
+        // --- Dashboard Counts ---
+        $today = Carbon::today()->format('Y-m-d');
+
         $totalEmployees = Employee::count();
 
-        // Present Today = Employees who have a check-in today
-        $presentToday = Attendance::whereDate('attendance_date', $today)
+        $presentToday = Attendance::whereDate('created_at', $today)
             ->whereNotNull('check_in')
             ->distinct('employee_id')
             ->count('employee_id');
 
-        // Absent Today = Total Employees - Present Today
         $absentToday = $totalEmployees - $presentToday;
 
-        // ======================
-        // Attendance / Employee Query with Filters
-        // ======================
-        $query = Attendance::with('employee')->orderByDesc('attendance_date');
-
-        if ($employeeName) {
-            $query->whereHas('employee', function ($q) use ($employeeName) {
-                $q->where('name', 'LIKE', "%{$employeeName}%");
-            });
-        }
-
-        if ($startDate && $endDate) {
-            $query->whereBetween('attendance_date', [$startDate, $endDate]);
-        }
-
-        $attendances = $query->paginate(10);
-
-        // ======================
-        // Send Data to Dashboard View
-        // ======================
-        return view('admin.dashboard', [
-            'totalEmployees' => $totalEmployees,
-            'presentToday' => $presentToday,
-            'absentToday' => $absentToday,
-            'attendances' => $attendances,
-            'employeeName' => $employeeName,
-            'startDate' => $startDate,
-            'endDate' => $endDate
-        ]);
+        return view('admin.dashboard', compact(
+            'attendances',
+            'totalEmployees',
+            'presentToday',
+            'absentToday',
+            'employeeName',
+            'startDate',
+            'endDate'
+        ));
     }
 }
+
+
+
+
 
 
 

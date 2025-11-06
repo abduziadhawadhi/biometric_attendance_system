@@ -20,14 +20,34 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand fw-bold" href="#">WCF Attendance</a>
-            <div class="collapse navbar-collapse justify-content-end">
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav">
                     @auth
-                        <li class="nav-item"><a href="{{ route('dashboard') }}" class="nav-link">Dashboard</a></li>
+                        {{-- Redirect Dashboard Based on User Role --}}
+                        @if(auth()->user()->role === 'admin')
+                            <li class="nav-item">
+                                <a href="{{ route('admin.dashboard') }}" class="nav-link">Dashboard</a>
+                            </li>
+                        @elseif(auth()->user()->role === 'employee')
+                            <li class="nav-item">
+                                <a href="{{ route('employee.dashboard') }}" class="nav-link">Dashboard</a>
+                            </li>
+                        @endif
+
+                        {{-- Logout --}}
                         <li class="nav-item">
-                            <form method="POST" action="{{ route('logout') }}">
+                            <a href="{{ route('logout') }}"
+                               class="nav-link"
+                               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                Logout
+                            </a>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
                                 @csrf
-                                <button class="btn btn-link nav-link" type="submit">Logout</button>
                             </form>
                         </li>
                     @endauth
@@ -47,4 +67,5 @@
     <script src="{{ asset('js/app.js') }}"></script>
 </body>
 </html>
+
 

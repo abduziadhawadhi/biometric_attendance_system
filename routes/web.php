@@ -8,65 +8,67 @@ use App\Http\Controllers\AttendanceController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Authentication Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you register web routes for your application.
-| These routes are loaded by the RouteServiceProvider within a group
-| that contains the "web" middleware group.
-|
 */
 
-// Redirect base URL to login
-Route::get('/', function () {
-    return redirect()->route('login');
-});
-
-// ==============================
-// AUTHENTICATION ROUTES
-// ==============================
+// Login
+Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
+
+// Logout
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// Password reset routes (if you use them)
-Route::get('/password/reset', [LoginController::class, 'showResetForm'])->name('password.request');
+// Password Reset (Optional Pages)
+Route::get('/password/reset', function () { return view('auth.passwords.email'); })->name('password.request');
+Route::post('/password/email', [LoginController::class, 'sendResetLinkEmail'])->name('password.email');
 
-// ==============================
-// ADMIN ROUTES
-// ==============================
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:admin'])->group(function () {
 
     // Admin Dashboard
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
 
-    // Export attendance to Excel
+    // Export Attendance to Excel
     Route::get('/admin/export', [AdminController::class, 'export'])->name('admin.export');
 
-    // Employee Management
+    // Add Employee
     Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
     Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
 });
 
-// ==============================
-// EMPLOYEE ROUTES
-// ==============================
+
+/*
+|--------------------------------------------------------------------------
+| Employee Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:employee'])->group(function () {
 
     // Employee Dashboard
     Route::get('/employee/dashboard', [EmployeeController::class, 'dashboard'])->name('employee.dashboard');
 
-    // Attendance Actions
+    // Attendance Check-in & Check-out
     Route::post('/attendance/checkin', [AttendanceController::class, 'checkIn'])->name('attendance.checkin');
     Route::post('/attendance/checkout', [AttendanceController::class, 'checkOut'])->name('attendance.checkout');
 });
 
-// ==============================
-// DEFAULT FALLBACK
-// ==============================
+
+/*
+|--------------------------------------------------------------------------
+| Fallback
+|--------------------------------------------------------------------------
+*/
 Route::fallback(function () {
-    return response()->view('errors.404', [], 404);
+    return redirect()->route('login');
 });
+
 
 
 
