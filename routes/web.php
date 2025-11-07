@@ -39,8 +39,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/export', [AdminController::class, 'export'])->name('admin.export');
 
     // Add Employee
-    Route::get('/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
-    Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
+    Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin/employees/create', [EmployeeController::class, 'create'])->name('employees.create');
+    Route::post('/admin/employees/store', [EmployeeController::class, 'store'])->name('employees.store');
 });
 
 
