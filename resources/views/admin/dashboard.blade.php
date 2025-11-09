@@ -56,6 +56,13 @@
         </div>
     </form>
 
+    
+<div class="text-end mb-3">
+    <a href="{{ route('admin.export', request()->all()) }}" class="btn btn-success">
+    <i class="bi bi-file-earmark-excel"></i> Export to Excel
+    </a>
+</div>
+
     <!-- Reset Filter Button -->
     <div class="text-end mb-3">
         <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">
@@ -65,9 +72,10 @@
 
     <!-- Add Employee Button -->
     <div class="text-start mb-3">
-        <a href="{{ route('employees.create') }}" class="btn btn-success">
-            <i class="bi bi-person-plus"></i> Add New Employee
-        </a>
+        <a href="{{ route('employees.create') }}" class="btn btn-success mb-3">
+    <i class="bi bi-person-plus-fill"></i> Add New Employee
+</a>
+
     </div>
 
     <!-- Attendance Table -->

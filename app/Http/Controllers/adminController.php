@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Attendance;
 use Carbon\Carbon;
+use App\Exports\AttendanceExport;
+use Maatwebsite\Excel\Facades\Excel;
+
 
 class AdminController extends Controller
 {
@@ -56,6 +59,19 @@ class AdminController extends Controller
             'endDate'
         ));
     }
+
+    public function export(Request $request)
+{
+    return Excel::download(
+        new AttendanceExport(
+            $request->employee_name,
+            $request->start_date,
+            $request->end_date
+        ),
+        'attendance_records.xlsx'
+    );
+}
+
 }
 
 

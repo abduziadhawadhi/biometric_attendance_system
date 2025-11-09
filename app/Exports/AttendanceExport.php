@@ -12,7 +12,7 @@ class AttendanceExport implements FromCollection, WithHeadings
     protected $startDate;
     protected $endDate;
 
-    public function __construct($employeeName = null, $startDate = null, $endDate = null)
+    public function __construct($employeeName, $startDate, $endDate)
     {
         $this->employeeName = $employeeName;
         $this->startDate = $startDate;
@@ -24,31 +24,37 @@ class AttendanceExport implements FromCollection, WithHeadings
         $query = Attendance::with('employee');
 
         if ($this->employeeName) {
-            $query->whereHas('employee', function ($q) {
-                $q->where('name', 'like', "%{$this->employeeName}%");
+            $query->whereHas('employee', function($q) {
+                $q->where('name', 'LIKE', '%' . $this->employeeName . '%');
             });
         }
 
         if ($this->startDate && $this->endDate) {
-            $query->whereBetween('attendance_date', [$this->startDate, $this->endDate]);
+            $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
         }
 
-        $records = $query->get();
-
-        return $records->map(function ($attendance) {
+        return $query->orderBy('created_at', 'desc')->get()->map(function ($item) {
             return [
-                'Employee Name' => $attendance->employee->name ?? 'N/A',
-                'Department'    => $attendance->employee->department ?? 'N/A',
-                'Date'          => $attendance->attendance_date,
-                'Check In'      => $attendance->check_in ?? '-',
-                'Check Out'     => $attendance->check_out ?? '-',
-                'Status'        => $attendance->check_in ? 'Present' : 'Absent',
+                'Employee Name' => $item->employee->name,
+                'Department'    => $item->employee->department,
+                'Date'          => $item->created_at->format('d M Y'),
+                'Check In'      => $item->check_in ?? '-',
+                'Check Out'     => $item->check_out ?? '-',
+                'Status'        => ucfirst($item->status),
             ];
         });
     }
 
     public function headings(): array
     {
-        return ['Employee Name', 'Department', 'Date', 'Check In', 'Check Out', 'Status'];
+        return [
+            'Employee Name',
+            'Department',
+            'Date',
+            'Check In',
+            'Check Out',
+            'Status'
+        ];
     }
 }
+
