@@ -3,9 +3,9 @@
 @section('content')
 <div class="container mt-4">
 
-    <h3 class="text-center text-primary mb-4 fw-bold">
-        Admin Dashboard
-    </h3>
+    <!-- <h3 class="text-center text-primary mb-4 fw-bold"> -->
+        <!-- Admin Dashboard -->
+    <!-- </h3> -->
 
     <!-- Dashboard Cards -->
     <div class="row text-center mb-4">
@@ -71,10 +71,10 @@
     </div>
 
     <!-- Add Employee Button -->
-    <div class="text-start mb-3">
-        <a href="{{ route('employees.create') }}" class="btn btn-success mb-3">
-    <i class="bi bi-person-plus-fill"></i> Add New Employee
-</a>
+    <!-- <div class="text-start mb-3"> -->
+        <!-- <a href="{{ route('employees.create') }}" class="btn btn-success mb-3"> -->
+    <!-- <i class="bi bi-person-plus-fill"></i> Add New Employee -->
+<!-- </a> -->
 
     </div>
 
