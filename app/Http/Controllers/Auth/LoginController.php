@@ -3,80 +3,45 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to the correct dashboard based on their role.
-    |
-    */
-
-    use AuthenticatesUsers;
-
-    /**
-     * Determine where to redirect users after login based on their role.
-     *
-     * @return string
-     */
-    protected function redirectTo()
-    {
-        $user = auth()->user();
-
-        if ($user->role === 'admin') {
-            return '/admin/dashboard';
-        }
-
-        if ($user->role === 'employee') {
-            return '/employee/dashboard';
-        }
-
-        // Fallback in case a user has no role assigned
-        return '/login';
-    }
-
-    /**
-     * Show the application's login form.
-     *
-     * @return \Illuminate\View\View
-     */
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    /**
-     * Handle user logout and redirect to login page.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        if (Auth::guard('web')->attempt($credentials, $request->filled('remember'))) {
+            $request->session()->regenerate();
+
+            // Redirect based on role (admin or employee)
+            $user = Auth::guard('web')->user();
+            if ($user->is_admin ?? false) {
+                return redirect()->intended('admin/dashboard');
+            }
+            return redirect()->intended('employee/dashboard');
+        }
+
+        return back()->withErrors([
+            'email' => 'Invalid email or password. Please try again.',
+        ]);
+    }
+
     public function logout(Request $request)
     {
-        $this->guard()->logout();
-
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/login')->with('status', 'You have been logged out successfully.');
-    }
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        // Guests can only access login, authenticated users can log out
-        $this->middleware('guest')->except('logout');
+        return redirect('/login');
     }
 }
-
-
