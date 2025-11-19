@@ -45,12 +45,7 @@
         </div>
     </form>
 
-    <!-- Reset Filters
-    <div class="text-end mb-3">
-        <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">
-            <i class="bi bi-arrow-counterclockwise"></i> Reset Filters
-        </a>
-    </div> -->
+   
 
     <!-- Add Employee + Export Buttons -->
     <div class="d-flex justify-content-start mb-3 gap-2">
