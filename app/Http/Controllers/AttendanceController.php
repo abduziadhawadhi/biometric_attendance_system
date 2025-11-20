@@ -3,66 +3,57 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Attendance;
 use Carbon\Carbon;
-date_default_timezone_set('Africa/Nairobi');
+use App\Models\Attendance;
 
 class AttendanceController extends Controller
 {
-    /**
-     * Employee Check-In
-     */
-    public function checkIn(Request $request)
+    public function checkIn()
     {
-        $employeeId = Auth::id();
-        $today = Carbon::today();
+        $employee = auth()->user();
+        $tz = "Africa/Nairobi";
 
-        // Check if already checked in today
-        $existing = Attendance::where('employee_id', $employeeId)
-            ->whereDate('check_in', $today)
+        // check if already checked in today
+        $today = Carbon::now($tz)->toDateString();
+        $exists = Attendance::where('employee_id', $employee->id)
+            ->whereDate('created_at', $today)
             ->first();
 
-        if ($existing) {
-            return back()->with('error', 'You have already checked in today.');
+        if ($exists) {
+            return back()->with('error', 'You already checked in today.');
         }
 
         Attendance::create([
-            'employee_id' => $employeeId,
-            'check_in' => Carbon::now(),
-            'status' => 'present',
+            'employee_id' => $employee->id,
+            'check_in'    => Carbon::now($tz)->format('H:i:s'), // only time
+            'status'      => 'present'
         ]);
 
         return back()->with('success', 'Check-in successful!');
     }
 
-    /**
-     * Employee Check-Out
-     */
-    public function checkOut(Request $request)
+    public function checkOut()
     {
-        $employeeId = Auth::id();
-        $today = Carbon::today();
+        $employee = auth()->user();
+        $tz = "Africa/Nairobi";
 
-        $attendance = Attendance::where('employee_id', $employeeId)
-            ->whereDate('check_in', $today)
+        $today = Carbon::now($tz)->toDateString();
+        $attendance = Attendance::where('employee_id', $employee->id)
+            ->whereDate('created_at', $today)
             ->first();
 
         if (!$attendance) {
-            return back()->with('error', 'You have not checked in today.');
+            return back()->with('error', 'You did not check in today.');
         }
 
         if ($attendance->check_out) {
-            return back()->with('error', 'You have already checked out today.');
+            return back()->with('error', 'You already checked out today.');
         }
 
         $attendance->update([
-            'check_out' => Carbon::now(),
+            'check_out' => Carbon::now($tz)->format('H:i:s') // only time
         ]);
 
         return back()->with('success', 'Check-out successful!');
     }
 }
-
-
-

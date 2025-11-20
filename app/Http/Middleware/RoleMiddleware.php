@@ -17,18 +17,24 @@ class RoleMiddleware
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
     public function handle(Request $request, Closure $next, $role)
-    {
-        // Check if the user is not logged in
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
-
-        // If logged in but role does not match
-        if (Auth::user()->role !== $role) {
-            return redirect()->route('dashboard');
-        }
-
-        // If role matches, continue
-        return $next($request);
+{
+    if (!Auth::check()) {
+        return redirect()->route('login');
     }
+
+    if (Auth::user()->role !== $role) {
+        // Redirect based on user role
+        if (Auth::user()->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        if (Auth::user()->role === 'employee') {
+            return redirect()->route('employee.dashboard');
+        }
+
+        return redirect()->route('login');
+    }
+
+    return $next($request);
+}
 }
