@@ -11,37 +11,33 @@ use Carbon\Carbon;
 class EmployeeController extends Controller
 {
     /**
-     * Employee Dashboard
-     * - shows his/her own attendance
-     * - buttons to Check In / Check Out manually
+     * Employee Dashboard – list own attendance, compute late & overtime.
      */
     public function dashboard()
     {
-        $tz       = 'Africa/Nairobi';
         $employee = auth()->user();
 
         if (!$employee instanceof Employee) {
             abort(403, 'Only employees can access this page.');
         }
 
+        $tz    = 'Africa/Nairobi';
         $today = Carbon::now($tz)->toDateString();
 
-        // Today's attendance record (if any)
+        // Used to enable/disable Check In / Check Out buttons
         $todayAttendance = Attendance::where('employee_id', $employee->id)
             ->whereDate('created_at', $today)
-            ->orderBy('created_at', 'asc')
             ->first();
 
-        // For the table: last 30 attendance records
+        // All attendance records for this employee (latest first)
         $attendances = Attendance::where('employee_id', $employee->id)
             ->orderBy('created_at', 'desc')
-            ->limit(30)
-            ->get();
+            ->paginate(10);
 
-        // Compute late & overtime per record
+        // Compute Late & Overtime (minutes) for each record
         foreach ($attendances as $att) {
-            $created = Carbon::parse($att->created_at, $tz);
-            $date    = $created->toDateString();
+            $created = Carbon::parse($att->created_at)->setTimezone($tz);
+            $date    = $created->toDateString();              // e.g. 2025-11-15
 
             $officeStart = Carbon::parse($date . ' 08:00:00', $tz);
             $officeEnd   = Carbon::parse($date . ' 17:00:00', $tz);
@@ -49,39 +45,35 @@ class EmployeeController extends Controller
             $lateMinutes     = 0;
             $overtimeMinutes = 0;
 
-            if ($att->check_in) {
+            if (!empty($att->check_in)) {
+                // combine date (Y-m-d) + time (H:i:s) – NO double date
                 $checkIn = Carbon::parse($date . ' ' . $att->check_in, $tz);
                 if ($checkIn->gt($officeStart)) {
                     $lateMinutes = $checkIn->diffInMinutes($officeStart);
                 }
             }
 
-            if ($att->check_out) {
+            if (!empty($att->check_out)) {
                 $checkOut = Carbon::parse($date . ' ' . $att->check_out, $tz);
                 if ($checkOut->gt($officeEnd)) {
                     $overtimeMinutes = $checkOut->diffInMinutes($officeEnd);
                 }
             }
 
+            // Extra properties only for display in the blade
             $att->late_minutes     = $lateMinutes;
             $att->overtime_minutes = $overtimeMinutes;
         }
 
-        // Button visibility
-        $canCheckIn  = !$todayAttendance || !$todayAttendance->check_in;
-        $canCheckOut = $todayAttendance && $todayAttendance->check_in && !$todayAttendance->check_out;
-
         return view('employee.dashboard', [
-            'employee'        => $employee,
-            'attendances'     => $attendances,
-            'todayAttendance' => $todayAttendance,
-            'canCheckIn'      => $canCheckIn,
-            'canCheckOut'     => $canCheckOut,
+            'employee'         => $employee,
+            'todayAttendance'  => $todayAttendance,
+            'attendances'      => $attendances,
         ]);
     }
 
     /**
-     * Show Add Employee form (Admin)
+     * Show Add Employee form (for admin).
      */
     public function create()
     {
@@ -89,7 +81,7 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Store new Employee (Admin)
+     * Store new employee (created by admin).
      */
     public function store(Request $request)
     {
@@ -107,7 +99,6 @@ class EmployeeController extends Controller
             'email'      => $validated['email'],
             'position'   => $validated['position'],
             'password'   => Hash::make($validated['password']),
-            'role'       => 'employee', // make sure this column exists
         ]);
 
         return redirect()
