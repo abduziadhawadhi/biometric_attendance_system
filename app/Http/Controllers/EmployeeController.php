@@ -2,107 +2,92 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Employee;
 use App\Models\Attendance;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
 class EmployeeController extends Controller
 {
-    /**
-     * Employee Dashboard – list own attendance, compute late & overtime.
-     */
+    protected $tz = 'Africa/Nairobi';
+
+    // Show employee dashboard
     public function dashboard()
     {
         $employee = auth()->user();
+        $today = Carbon::now($this->tz)->toDateString();
 
-        if (!$employee instanceof Employee) {
-            abort(403, 'Only employees can access this page.');
-        }
-
-        $tz    = 'Africa/Nairobi';
-        $today = Carbon::now($tz)->toDateString();
-
-        // Used to enable/disable Check In / Check Out buttons
+        // Today attendance (if exists)
         $todayAttendance = Attendance::where('employee_id', $employee->id)
             ->whereDate('created_at', $today)
             ->first();
 
-        // All attendance records for this employee (latest first)
+        // Fetch user's attendance history
         $attendances = Attendance::where('employee_id', $employee->id)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        // Compute Late & Overtime (minutes) for each record
+        // Compute late & overtime CORRECTLY
         foreach ($attendances as $att) {
-            $created = Carbon::parse($att->created_at)->setTimezone($tz);
-            $date    = $created->toDateString();              // e.g. 2025-11-15
+            // Use ORIGINAL timestamp (NO double date construction)
+            $created  = Carbon::parse($att->created_at)->setTimezone($this->tz);
+            $dateOnly = $created->toDateString();
 
-            $officeStart = Carbon::parse($date . ' 08:00:00', $tz);
-            $officeEnd   = Carbon::parse($date . ' 17:00:00', $tz);
+            $officeStart = Carbon::parse($dateOnly . ' 08:00:00', $this->tz);
+            $officeEnd   = Carbon::parse($dateOnly . ' 17:00:00', $this->tz);
 
-            $lateMinutes     = 0;
-            $overtimeMinutes = 0;
+            $late = 0;
+            $overtime = 0;
 
-            if (!empty($att->check_in)) {
-                // combine date (Y-m-d) + time (H:i:s) – NO double date
-                $checkIn = Carbon::parse($date . ' ' . $att->check_in, $tz);
+            // Late
+            if ($att->check_in) {
+                $checkIn = Carbon::parse($att->check_in, $this->tz);
                 if ($checkIn->gt($officeStart)) {
-                    $lateMinutes = $checkIn->diffInMinutes($officeStart);
+                    $late = $checkIn->diffInMinutes($officeStart);
                 }
             }
 
-            if (!empty($att->check_out)) {
-                $checkOut = Carbon::parse($date . ' ' . $att->check_out, $tz);
+            // Overtime
+            if ($att->check_out) {
+                $checkOut = Carbon::parse($att->check_out, $this->tz);
                 if ($checkOut->gt($officeEnd)) {
-                    $overtimeMinutes = $checkOut->diffInMinutes($officeEnd);
+                    $overtime = $checkOut->diffInMinutes($officeEnd);
                 }
             }
 
-            // Extra properties only for display in the blade
-            $att->late_minutes     = $lateMinutes;
-            $att->overtime_minutes = $overtimeMinutes;
+            $att->late_minutes = $late;
+            $att->overtime_minutes = $overtime;
         }
 
-        return view('employee.dashboard', [
-            'employee'         => $employee,
-            'todayAttendance'  => $todayAttendance,
-            'attendances'      => $attendances,
-        ]);
+        return view('employee.dashboard', compact('employee', 'attendances', 'todayAttendance'));
     }
 
-    /**
-     * Show Add Employee form (for admin).
-     */
+    // Show add employee form
     public function create()
     {
         return view('admin.add_employee');
     }
 
-    /**
-     * Store new employee (created by admin).
-     */
+    // Store new employee
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'department' => 'required|string|max:255',
-            'email'      => 'required|email|unique:employees,email',
-            'position'   => 'required|string|max:255',
-            'password'   => 'required|string|min:6',
+            'name'      => 'required|string|max:255',
+            'department'=> 'required|string|max:255',
+            'email'     => 'required|email|unique:employees,email',
+            'position'  => 'required|string|max:255',
+            'password'  => 'required|string|min:6',
         ]);
 
         Employee::create([
-            'name'       => $validated['name'],
-            'department' => $validated['department'],
-            'email'      => $validated['email'],
-            'position'   => $validated['position'],
-            'password'   => Hash::make($validated['password']),
+            'name'      => $validated['name'],
+            'department'=> $validated['department'],
+            'email'     => $validated['email'],
+            'position'  => $validated['position'],
+            'password'  => Hash::make($validated['password']),
         ]);
 
-        return redirect()
-            ->route('admin.dashboard')
-            ->with('success', 'Employee added successfully!');
+        return redirect()->route('admin.dashboard')->with('success', 'Employee added successfully!');
     }
 }

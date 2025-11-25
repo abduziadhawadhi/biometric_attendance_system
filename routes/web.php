@@ -1,24 +1,39 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| Authentication Routes
 |--------------------------------------------------------------------------
 */
 
-// Default: send to login
-Route::get('/', function () {
-    return redirect()->route('login');
-});
+// Show login page
+Route::get('/', [LoginController::class, 'showLoginForm'])->name('login');
+Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login.form');
 
-// Laravel auth scaffolding (login, register, reset password…)
-Auth::routes();
+// Handle login POST
+Route::post('/login', [LoginController::class, 'login'])->name('login');
+
+// Logout
+Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
+// (Optional) Laravel forgot-password flow. Keep ONLY if those controllers exist.
+Route::get('forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])
+    ->name('password.request');
+Route::post('forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])
+    ->name('password.email');
+Route::get('reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])
+    ->name('password.reset');
+Route::post('reset-password', [ResetPasswordController::class, 'reset'])
+    ->name('password.update');
+
 
 /*
 |--------------------------------------------------------------------------
@@ -26,18 +41,21 @@ Auth::routes();
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:admin'])->group(function () {
+
     Route::get('/admin/dashboard', [AdminController::class, 'index'])
         ->name('admin.dashboard');
 
+    // Export to Excel (uses current filters)
     Route::get('/admin/export', [AdminController::class, 'export'])
         ->name('admin.export');
 
-    // Employee management by admin
-    Route::get('/employees/create', [EmployeeController::class, 'create'])
+    // Add employees
+    Route::get('/admin/employees/create', [EmployeeController::class, 'create'])
         ->name('employees.create');
-    Route::post('/employees', [EmployeeController::class, 'store'])
+    Route::post('/admin/employees', [EmployeeController::class, 'store'])
         ->name('employees.store');
 });
+
 
 /*
 |--------------------------------------------------------------------------
