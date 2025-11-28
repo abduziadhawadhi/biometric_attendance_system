@@ -2,112 +2,101 @@
 
 @section('content')
 <div class="container mt-4">
-    <h3 class="text-center mb-4">Admin Dashboard</h3>
+
+    <!-- <h2 class="text-center mb-4 fw-bold">Admin Dashboard</h2> -->
 
     {{-- TOP CARDS --}}
-    <div class="row text-center mb-4">
-        {{-- Total employees --}}
-        <div class="col-md-4 mb-3">
+    <div class="row g-3 mb-4">
+
+        {{-- Total Employees --}}
+        <div class="col-md-4">
             <a href="{{ route('admin.dashboard', ['card' => 'all']) }}" class="text-decoration-none">
-                <div class="card shadow-sm border-0 p-3 {{ $card === 'all' ? 'border-primary' : '' }}">
-                    <h6 class="text-muted mb-1">TOTAL EMPLOYEES</h6>
-                    <h2 class="fw-bold">{{ $totalEmployees }}</h2>
+                <div class="card shadow-sm border-0 text-center py-3
+                    {{ $card === 'all' ? 'bg-primary text-white' : 'bg-light text-dark' }}">
+                    <h6 class="mb-1 text-uppercase small">Total Employees</h6>
+                    <h2 class="fw-bold mb-0">{{ $totalEmployees }}</h2>
                 </div>
             </a>
         </div>
 
-        {{-- Present today --}}
-        <div class="col-md-4 mb-3">
+        {{-- Present Today --}}
+        <div class="col-md-4">
             <a href="{{ route('admin.dashboard', ['card' => 'present']) }}" class="text-decoration-none">
-                <div class="card shadow-sm border-0 p-3 bg-success text-white {{ $card === 'present' ? 'border border-3 border-light' : '' }}">
-                    <h6 class="mb-1 text-uppercase">PRESENT TODAY</h6>
-                    <h2 class="fw-bold">{{ $presentToday }}</h2>
+                <div class="card shadow-sm border-0 text-center py-3
+                    {{ $card === 'present' ? 'bg-success text-white' : 'bg-light text-dark' }}">
+                    <h6 class="mb-1 text-uppercase small">Present Today</h6>
+                    <h2 class="fw-bold mb-0">{{ $presentToday }}</h2>
                 </div>
             </a>
         </div>
 
-        {{-- Absent today --}}
-        <div class="col-md-4 mb-3">
+        {{-- Absent Today --}}
+        <div class="col-md-4">
             <a href="{{ route('admin.dashboard', ['card' => 'absent']) }}" class="text-decoration-none">
-                <div class="card shadow-sm border-0 p-3 bg-danger text-white {{ $card === 'absent' ? 'border border-3 border-light' : '' }}">
-                    <h6 class="mb-1 text-uppercase">ABSENT TODAY</h6>
-                    <h2 class="fw-bold">{{ $absentToday }}</h2>
+                <div class="card shadow-sm border-0 text-center py-3
+                    {{ $card === 'absent' ? 'bg-danger text-white' : 'bg-light text-dark' }}">
+                    <h6 class="mb-1 text-uppercase small">Absent Today</h6>
+                    <h2 class="fw-bold mb-0">{{ $absentToday }}</h2>
                 </div>
             </a>
         </div>
     </div>
 
-    {{-- FILTER FORM --}}
-    <form method="GET" action="{{ route('admin.dashboard') }}" class="row g-2 mb-3">
+    {{-- FILTERS --}}
+    <form method="GET" action="{{ route('admin.dashboard') }}" class="row g-2 align-items-end mb-3">
+        {{-- keep current card when searching --}}
         <input type="hidden" name="card" value="{{ $card }}">
 
         <div class="col-md-4">
-            <input
-                type="text"
-                name="employee_name"
-                class="form-control"
-                placeholder="Search Employee (name, email, department, position)"
-                value="{{ old('employee_name', $employeeName ?? '') }}">
+            <label class="form-label small mb-1">Search Employee</label>
+            <input type="text" name="employee_name" class="form-control"
+                   placeholder="Name, email, department, position"
+                   value="{{ $employeeName }}">
         </div>
 
         <div class="col-md-3">
-            <input
-                type="date"
-                name="start_date"
-                class="form-control"
-                value="{{ $startDate }}">
+            <label class="form-label small mb-1">From Date</label>
+            <input type="date" name="start_date" class="form-control"
+                   value="{{ $startDate }}">
         </div>
 
         <div class="col-md-3">
-            <input
-                type="date"
-                name="end_date"
-                class="form-control"
-                value="{{ $endDate }}">
+            <label class="form-label small mb-1">To Date</label>
+            <input type="date" name="end_date" class="form-control"
+                   value="{{ $endDate }}">
         </div>
 
-        <div class="col-md-1 d-grid">
-            <button type="submit" class="btn btn-primary">
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-fill">
                 <i class="bi bi-search"></i> Search
             </button>
-        </div>
-
-        <div class="col-md-1 d-grid">
-            <a href="{{ route('admin.dashboard', ['card' => $card]) }}" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            <a href="{{ route('admin.dashboard', ['card' => $card]) }}"
+               class="btn btn-outline-secondary flex-fill">
+                <i class="bi bi-arrow-clockwise"></i> Reset
             </a>
         </div>
     </form>
 
-    {{-- EXPORT BUTTON --}}
-    <div class="mb-3 text-end">
-        <a href="{{ route('admin.export', request()->query()) }}" class="btn btn-success">
+    {{-- Export button --}}
+    <div class="text-end mb-3">
+        <a href="{{ route('admin.export', request()->query()) }}"
+           class="btn btn-success">
             <i class="bi bi-file-earmark-excel"></i> Export to Excel
         </a>
     </div>
 
-    {{-- MAIN TABLE CARD --}}
+    {{-- CONTENT CARD --}}
     <div class="card shadow-sm">
         <div class="card-body">
-            <h5 class="mb-3">
-                @if ($viewMode === 'employeesAll')
-                    All Employees
-                @elseif ($viewMode === 'presentAttendance')
-                    Attendance Records (Present)
-                @elseif ($viewMode === 'absentEmployees')
-                    Employees Absent
-                @else
-                    List
-                @endif
-            </h5>
+            <h5 class="card-title mb-3">{{ $sectionTitle ?: 'Employees' }}</h5>
 
-            {{-- MODE: ALL EMPLOYEES or ABSENT EMPLOYEES --}}
-            @if ($viewMode === 'employeesAll' || $viewMode === 'absentEmployees')
+            {{-- 1) TOTAL EMPLOYEES VIEW --}}
+            @if ($viewMode === 'all')
                 <div class="table-responsive">
-                    <table class="table table-striped align-middle">
+                    <table class="table table-striped table-hover align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th>#</th>
+                                <th style="width:60px;">#</th>
                                 <th>Employee Name</th>
                                 <th>Department</th>
                                 <th>Email</th>
@@ -115,42 +104,42 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($employees as $index => $emp)
-                                <tr>
-                                    <td>{{ $employees->firstItem() + $index }}</td>
-                                    <td>{{ $emp->name }}</td>
-                                    <td>{{ $emp->department }}</td>
-                                    <td>{{ $emp->email }}</td>
-                                    <td>{{ $emp->position }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center text-muted">
-                                        No employees found.
-                                    </td>
-                                </tr>
-                            @endforelse
+                        @forelse ($employees as $index => $emp)
+                            <tr>
+                                <td>{{ $employees->firstItem() + $index }}</td>
+                                <td>{{ $emp->name }}</td>
+                                <td>{{ $emp->department }}</td>
+                                <td>{{ $emp->email }}</td>
+                                <td>{{ $emp->position }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    No employees found.
+                                </td>
+                            </tr>
+                        @endforelse
                         </tbody>
                     </table>
                 </div>
 
-                @if ($employees->hasPages())
+                @if($employees)
                     <div class="d-flex justify-content-center">
                         {{ $employees->links() }}
                     </div>
                 @endif
             @endif
 
-            {{-- MODE: PRESENT ATTENDANCE (WITH TIME, LATE, OVERTIME) --}}
-            @if ($viewMode === 'presentAttendance')
+            {{-- 2) PRESENT VIEW (with late & overtime) --}}
+            @if ($viewMode === 'present')
                 <div class="table-responsive">
-                    <table class="table table-striped align-middle">
+                    <table class="table table-striped table-hover align-middle">
                         <thead class="table-dark">
                             <tr>
-                                <th>#</th>
-                                <th>Date</th>
-                                <th>Employee</th>
+                                <th style="width:60px;">#</th>
+                                <th>Employee Name</th>
                                 <th>Department</th>
+                                <th>Date</th>
                                 <th>Check In</th>
                                 <th>Check Out</th>
                                 <th>Late (min)</th>
@@ -159,42 +148,82 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($attendances as $index => $att)
-                                <tr>
-                                    <td>{{ $attendances->firstItem() + $index }}</td>
-                                    <td>
-                                        {{ \Carbon\Carbon::parse($att->created_at)->setTimezone('Africa/Nairobi')->format('d M Y') }}
-                                    </td>
-                                    <td>{{ $att->employee->name ?? 'N/A' }}</td>
-                                    <td>{{ $att->employee->department ?? 'N/A' }}</td>
-                                    <td>{{ $att->check_in ?? '-' }}</td>
-                                    <td>{{ $att->check_out ?? '-' }}</td>
-                                    <td>{{ $att->late_minutes }}</td>
-                                    <td>{{ $att->overtime_minutes }}</td>
-                                    <td>
-                                        <span class="badge bg-success text-uppercase">
-                                            {{ $att->status ?? 'present' }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="9" class="text-center text-muted">
-                                        No attendance records found for the selected period.
-                                    </td>
-                                </tr>
-                            @endforelse
+                        @forelse ($attendances as $index => $att)
+                            <tr>
+                                <td>{{ $attendances->firstItem() + $index }}</td>
+                                <td>{{ $att->employee->name ?? 'N/A' }}</td>
+                                <td>{{ $att->employee->department ?? 'N/A' }}</td>
+                                <td>{{ \Carbon\Carbon::parse($att->created_at)->toDateString() }}</td>
+                                <td>{{ $att->check_in ?? '-' }}</td>
+                                <td>{{ $att->check_out ?? '-' }}</td>
+                                <td>{{ $att->late_minutes ?? 0 }}</td>
+                                <td>{{ $att->overtime_minutes ?? 0 }}</td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        {{ ucfirst($att->status ?? 'present') }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="text-center text-muted">
+                                    No attendance records found.
+                                </td>
+                            </tr>
+                        @endforelse
                         </tbody>
                     </table>
                 </div>
 
-                @if ($attendances->hasPages())
+                @if($attendances)
                     <div class="d-flex justify-content-center">
                         {{ $attendances->links() }}
                     </div>
                 @endif
             @endif
+
+            {{-- 3) ABSENT VIEW --}}
+            @if ($viewMode === 'absent')
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th style="width:60px;">#</th>
+                                <th>Employee Name</th>
+                                <th>Department</th>
+                                <th>Email</th>
+                                <th>Position</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @forelse ($employees as $index => $emp)
+                            <tr>
+                                <td>{{ $employees->firstItem() + $index }}</td>
+                                <td>{{ $emp->name }}</td>
+                                <td>{{ $emp->department }}</td>
+                                <td>{{ $emp->email }}</td>
+                                <td>{{ $emp->position }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    No absent employees found.
+                                </td>
+                            </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+
+                @if($employees)
+                    <div class="d-flex justify-content-center">
+                        {{ $employees->links() }}
+                    </div>
+                @endif
+            @endif
+
         </div>
     </div>
+
 </div>
 @endsection
