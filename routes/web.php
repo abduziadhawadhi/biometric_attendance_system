@@ -74,4 +74,9 @@ Route::middleware(['auth', 'role:employee'])->group(function () {
 
     Route::post('/attendance/checkout', [AttendanceController::class, 'checkOut'])
         ->name('attendance.checkout');
+
+        // routes/web.php (inside Route::middleware(['auth','role:employee'])->group(...))
+Route::get('/employee/export', [App\Http\Controllers\EmployeeController::class, 'export'])
+    ->name('employee.export');
+
 });

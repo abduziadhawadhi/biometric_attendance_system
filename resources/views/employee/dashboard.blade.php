@@ -28,6 +28,26 @@
                     <div class="text-muted">No check in yet today.</div>
                 @endif
             </div>
+</div>
+<form method="GET" action="{{ route('employee.dashboard') }}" class="row g-2 mb-3">
+    <div class="col-auto">
+        <input type="date" name="start_date" value="{{ request('start_date') }}" class="form-control" placeholder="From">
+    </div>
+    <div class="col-auto">
+        <input type="date" name="end_date" value="{{ request('end_date') }}" class="form-control" placeholder="To">
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+
+    <!-- Export button: passes same date params -->
+    <div class="col-auto">
+        <a href="{{ route('employee.export', ['start_date' => request('start_date'), 'end_date' => request('end_date')]) }}"
+           class="btn btn-success">
+            <i class="bi bi-file-earmark-excel"></i> Export My Attendance
+        </a>
+    </div>
+</form>
 
             <div>
                 {{-- Check In Form --}}

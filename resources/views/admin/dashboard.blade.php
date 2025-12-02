@@ -27,7 +27,7 @@
 </style>
 
 <div class="container mt-4">
-    <h3 class="text-center text-primary mb-4">Admin Dashboard</h3>
+    <!-- <h3 class="text-center text-primary mb-4">Admin Dashboard</h3> -->
 
     {{-- KPI CARDS --}}
     <div class="row text-center mb-4 g-3">

@@ -13,209 +13,219 @@ class AdminController extends Controller
 {
     protected string $tz = 'Africa/Nairobi';
 
-    /**
-     * Show Admin Dashboard.
-     */
-    public function index(Request $request)
-    {
-        $tz    = $this->tz;
-        $today = Carbon::now($tz)->toDateString();
+   /**
+ * Show Admin Dashboard.
+ */
+public function index(Request $request)
+{
+    $tz    = 'Africa/Nairobi';
+    $today = Carbon::now($tz)->toDateString();
 
-        // Which card is active? all | present | absent
-        $card = $request->get('card', 'all');
+    // Which card is active? all | present | absent
+    $card = $request->get('card', 'all');
 
-        // Search text box
-        $search = trim($request->get('employee_name', ''));
+    // Search text box
+    $search = trim($request->get('employee_name', ''));
 
-        // Date filters (blank by default – only used when user chooses)
-        $startDate = $request->get('start_date') ?: null;
-        $endDate   = $request->get('end_date') ?: null;
+    // Date filters (blank by default)
+    $startDateRaw = $request->get('start_date');
+    $endDateRaw   = $request->get('end_date');
 
-        // -----------------------------
-        // TOP CARDS (always for today)
-        // -----------------------------
-        $totalEmployees = Employee::count();
+    // parse dates safely or null
+    $startDate = null;
+    $endDate   = null;
+    try {
+        if ($startDateRaw) {
+            $startDate = Carbon::createFromFormat('Y-m-d', $startDateRaw, $tz)->startOfDay();
+        }
+        if ($endDateRaw) {
+            $endDate = Carbon::createFromFormat('Y-m-d', $endDateRaw, $tz)->endOfDay();
+        }
+    } catch (\Exception $e) {
+        // invalid date format — ignore and treat as null
+        $startDate = null;
+        $endDate = null;
+    }
 
-        $presentToday = Attendance::whereDate('created_at', $today)
-            ->whereNotNull('check_in')
-            ->whereIn('status', ['present', 'permission'])
-            ->distinct('employee_id')
-            ->count('employee_id');
+    // -----------------------------
+    // TOP CARDS (always for today)
+    // -----------------------------
+    $totalEmployees = Employee::count();
 
-        $permissionToday = Attendance::whereDate('created_at', $today)
-            ->where('status', 'permission')
-            ->distinct('employee_id')
-            ->count('employee_id');
+    $presentToday = Attendance::whereDate('created_at', $today)
+        ->whereNotNull('check_in')
+        ->whereIn('status', ['present', 'permission'])
+        ->distinct('employee_id')
+        ->count('employee_id');
 
-        $absentToday = max($totalEmployees - $presentToday - $permissionToday, 0);
+    $permissionToday = Attendance::whereDate('created_at', $today)
+        ->where('status', 'permission')
+        ->distinct('employee_id')
+        ->count('employee_id');
 
-        // -----------------------------
-        // TABLE DATA
-        // -----------------------------
-        $viewMode     = null;   // 'all' | 'present' | 'absent'
-        $sectionTitle = '';
-        $employees    = null;   // for all + absent
-        $attendances  = null;   // for present
+    $absentToday = max($totalEmployees - $presentToday - $permissionToday, 0);
 
-        // 1) TOTAL EMPLOYEES CARD
-        if ($card === 'all') {
+    // -----------------------------
+    // TABLE DATA
+    // -----------------------------
+    $viewMode     = null;   // 'all' | 'present' | 'absent'
+    $sectionTitle = '';
+    $employees    = null;   // for all + absent
+    $attendances  = null;   // for present
 
-            $viewMode     = 'all';
-            $sectionTitle = 'All Employees';
+    // 1) TOTAL EMPLOYEES CARD
+    if ($card === 'all') {
+        $viewMode     = 'all';
+        $sectionTitle = 'All Employees';
 
-            $employeesQuery = Employee::query();
+        $employeesQuery = Employee::query();
 
-            if ($search) {
-                $employeesQuery->where(function ($q) use ($search) {
-                    $q->where('name', 'ILIKE', "%{$search}%")
-                        ->orWhere('email', 'ILIKE', "%{$search}%")
-                        ->orWhere('department', 'ILIKE', "%{$search}%")
-                        ->orWhere('position', 'ILIKE', "%{$search}%");
-                });
-            }
-
-            $employees = $employeesQuery
-                ->orderBy('name')
-                ->paginate(10)
-                ->withQueryString();
+        if ($search) {
+            $employeesQuery->where(function ($q) use ($search) {
+                $q->where('name', 'ILIKE', "%{$search}%")
+                    ->orWhere('email', 'ILIKE', "%{$search}%")
+                    ->orWhere('department', 'ILIKE', "%{$search}%")
+                    ->orWhere('position', 'ILIKE', "%{$search}%");
+            });
         }
 
-        // 2) PRESENT TODAY CARD
-        elseif ($card === 'present') {
+        $employees = $employeesQuery
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
+    }
 
-            $viewMode     = 'present';
-            $sectionTitle = 'Employees Present';
+    // 2) PRESENT TODAY OR DATE RANGE
+    elseif ($card === 'present') {
+        $viewMode     = 'present';
+        $sectionTitle = 'Employees Present';
 
-            $attendanceQuery = Attendance::with('employee')
-                ->whereNotNull('check_in')
-                ->whereIn('status', ['present', 'permission']);
+        $attendanceQuery = Attendance::with('employee')
+            ->whereNotNull('check_in')
+            ->whereIn('status', ['present', 'permission']);
 
-            // Date filters
-            if ($startDate && $endDate) {
-                $attendanceQuery->whereBetween('created_at', [
-                    $startDate . ' 00:00:00',
-                    $endDate   . ' 23:59:59',
-                ]);
-            } elseif ($startDate) {
-                $attendanceQuery->where('created_at', '>=', $startDate . ' 00:00:00');
-            } elseif ($endDate) {
-                $attendanceQuery->where('created_at', '<=', $endDate . ' 23:59:59');
-            } else {
-                // No dates chosen -> show today
-                $attendanceQuery->whereDate('created_at', $today);
-            }
+        // apply date filters if provided; otherwise default to today
+        if ($startDate && $endDate) {
+            $attendanceQuery->whereBetween('created_at', [
+                $startDate->toDateTimeString(),
+                $endDate->toDateTimeString(),
+            ]);
+        } elseif ($startDate && ! $endDate) {
+            $attendanceQuery->where('created_at', '>=', $startDate->toDateTimeString());
+        } elseif (! $startDate && $endDate) {
+            $attendanceQuery->where('created_at', '<=', $endDate->toDateTimeString());
+        } else {
+            // no date filters provided -> show records for today only
+            $attendanceQuery->whereDate('created_at', $today);
+        }
 
-            if ($search) {
-                $attendanceQuery->whereHas('employee', function ($q) use ($search) {
-                    $q->where('name', 'ILIKE', "%{$search}%")
-                        ->orWhere('email', 'ILIKE', "%{$search}%")
-                        ->orWhere('department', 'ILIKE', "%{$search}%")
-                        ->orWhere('position', 'ILIKE', "%{$search}%");
-                });
-            }
+        if ($search) {
+            $attendanceQuery->whereHas('employee', function ($q) use ($search) {
+                $q->where('name', 'ILIKE', "%{$search}%")
+                    ->orWhere('email', 'ILIKE', "%{$search}%")
+                    ->orWhere('department', 'ILIKE', "%{$search}%")
+                    ->orWhere('position', 'ILIKE', "%{$search}%");
+            });
+        }
 
-            $attendances = $attendanceQuery
-                ->orderBy('created_at', 'desc')
-                ->paginate(10)
-                ->withQueryString();
+        $attendances = $attendanceQuery
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
-            // ===== Compute Late & Overtime (minutes) for each record =====
-            foreach ($attendances as $att) {
-                // created_at is always a valid full timestamp
-                $created = Carbon::parse($att->created_at)->setTimezone($tz);
-                $date    = $created->toDateString(); // e.g. "2025-11-27"
+        // compute late & overtime
+        foreach ($attendances as $att) {
+            $created = Carbon::parse($att->created_at)->setTimezone($tz);
+            $date    = $created->toDateString();
 
-                $officeStart = Carbon::parse($date . ' 08:00:00', $tz);
-                $officeEnd   = Carbon::parse($date . ' 17:00:00', $tz);
+            $officeStart = Carbon::parse($date . ' 08:00:00', $tz);
+            $officeEnd   = Carbon::parse($date . ' 17:00:00', $tz);
 
-                $lateMinutes     = 0;
-                $overtimeMinutes = 0;
+            $lateMinutes     = 0;
+            $overtimeMinutes = 0;
 
-                // ---- CHECK IN ----
-                if ($att->check_in) {
-                    // If check_in already has a date part, use as-is,
-                    // otherwise prefix with $date.
-                    $checkInRaw = $att->check_in;
-                    $checkInStr = (strpos($checkInRaw, ' ') !== false)
-                        ? $checkInRaw
-                        : ($date . ' ' . $checkInRaw);
-
+            if ($att->check_in) {
+                // check_in might be stored as "H:i:s" or as full datetime; handle both
+                $checkInRaw = $att->check_in;
+                $checkInStr = (strpos($checkInRaw, ' ') !== false) ? $checkInRaw : ($date . ' ' . $checkInRaw);
+                try {
                     $checkIn = Carbon::parse($checkInStr, $tz);
-
                     if ($checkIn->gt($officeStart)) {
                         $lateMinutes = $checkIn->diffInMinutes($officeStart);
                     }
+                } catch (\Exception $e) {
+                    $lateMinutes = 0;
                 }
+            }
 
-                // ---- CHECK OUT ----
-                if ($att->check_out) {
-                    $checkOutRaw = $att->check_out;
-                    $checkOutStr = (strpos($checkOutRaw, ' ') !== false)
-                        ? $checkOutRaw
-                        : ($date . ' ' . $checkOutRaw);
-
+            if ($att->check_out) {
+                $checkOutRaw = $att->check_out;
+                $checkOutStr = (strpos($checkOutRaw, ' ') !== false) ? $checkOutRaw : ($date . ' ' . $checkOutRaw);
+                try {
                     $checkOut = Carbon::parse($checkOutStr, $tz);
-
                     if ($checkOut->gt($officeEnd)) {
                         $overtimeMinutes = $checkOut->diffInMinutes($officeEnd);
                     }
+                } catch (\Exception $e) {
+                    $overtimeMinutes = 0;
                 }
-
-                // attach to model for blade
-                $att->late_minutes     = $lateMinutes;
-                $att->overtime_minutes = $overtimeMinutes;
-            }
-        }
-
-        // 3) ABSENT TODAY CARD
-        elseif ($card === 'absent') {
-
-            $viewMode = 'absent';
-
-            $filterDate   = $startDate ?: $today;
-            $sectionTitle = 'Employees Absent on ' .
-                Carbon::parse($filterDate)->format('d M Y');
-
-            $presentIds = Attendance::whereDate('created_at', $filterDate)
-                ->whereNotNull('check_in')
-                ->whereIn('status', ['present', 'permission'])
-                ->pluck('employee_id')
-                ->unique()
-                ->toArray();
-
-            $employeesQuery = Employee::query()
-                ->whereNotIn('id', $presentIds);
-
-            if ($search) {
-                $employeesQuery->where(function ($q) use ($search) {
-                    $q->where('name', 'ILIKE', "%{$search}%")
-                        ->orWhere('email', 'ILIKE', "%{$search}%")
-                        ->orWhere('department', 'ILIKE', "%{$search}%")
-                        ->orWhere('position', 'ILIKE', "%{$search}%");
-                });
             }
 
-            $employees = $employeesQuery
-                ->orderBy('name')
-                ->paginate(10)
-                ->withQueryString();
+            $att->late_minutes     = $lateMinutes;
+            $att->overtime_minutes = $overtimeMinutes;
         }
-
-        return view('admin.dashboard', [
-            'card'            => $card,
-            'viewMode'        => $viewMode,
-            'sectionTitle'    => $sectionTitle,
-            'employees'       => $employees,
-            'attendances'     => $attendances,
-            'employeeName'    => $search,
-            'startDate'       => $startDate,
-            'endDate'         => $endDate,
-            'totalEmployees'  => $totalEmployees,
-            'presentToday'    => $presentToday,
-            'absentToday'     => $absentToday,
-            'permissionToday' => $permissionToday,
-        ]);
     }
+
+    // 3) ABSENT (for chosen date or today)
+    elseif ($card === 'absent') {
+        $viewMode = 'absent';
+
+        // use startDate if any, otherwise today
+        $filterDate = $startDate ? $startDate->toDateString() : $today;
+
+        $sectionTitle = 'Employees Absent on ' . Carbon::parse($filterDate)->format('d M Y');
+
+        $presentIds = Attendance::whereDate('created_at', $filterDate)
+            ->whereNotNull('check_in')
+            ->whereIn('status', ['present', 'permission'])
+            ->pluck('employee_id')
+            ->unique()
+            ->toArray();
+
+        $employeesQuery = Employee::query()
+            ->whereNotIn('id', $presentIds);
+
+        if ($search) {
+            $employeesQuery->where(function ($q) use ($search) {
+                $q->where('name', 'ILIKE', "%{$search}%")
+                    ->orWhere('email', 'ILIKE', "%{$search}%")
+                    ->orWhere('department', 'ILIKE', "%{$search}%")
+                    ->orWhere('position', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        $employees = $employeesQuery
+            ->orderBy('name')
+            ->paginate(10)
+            ->withQueryString();
+    }
+
+    return view('admin.dashboard', [
+        'card'            => $card,
+        'viewMode'        => $viewMode,
+        'sectionTitle'    => $sectionTitle,
+        'employees'       => $employees,
+        'attendances'     => $attendances,
+        'employeeName'    => $search,
+        'startDate'       => $startDateRaw,
+        'endDate'         => $endDateRaw,
+        'totalEmployees'  => $totalEmployees,
+        'presentToday'    => $presentToday,
+        'absentToday'     => $absentToday,
+        'permissionToday' => $permissionToday,
+    ]);
+}
+
 
     /**
      * Export attendance data to Excel (uses current filters).

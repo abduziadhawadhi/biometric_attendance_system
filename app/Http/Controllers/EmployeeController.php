@@ -8,7 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
-
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\EmployeeAttendanceExport;
 class EmployeeController extends Controller
 {
     protected string $tz = 'Africa/Nairobi';
@@ -110,4 +111,34 @@ class EmployeeController extends Controller
             ->route('admin.dashboard')
             ->with('success', 'Employee added successfully!');
     }
+
+    public function export(Request $request)
+{
+    $tz = 'Africa/Nairobi';
+
+    // raw inputs (YYYY-MM-DD) — optional
+    $startRaw = $request->get('start_date');
+    $endRaw   = $request->get('end_date');
+
+    // parse safely
+    $start = null; $end = null;
+    try {
+        if ($startRaw) {
+            $start = Carbon::createFromFormat('Y-m-d', $startRaw, $tz)->startOfDay();
+        }
+        if ($endRaw) {
+            $end = Carbon::createFromFormat('Y-m-d', $endRaw, $tz)->endOfDay();
+        }
+    } catch (\Exception $e) {
+        // ignore bad format — treat as null (or you can return with error)
+        $start = null; $end = null;
+    }
+
+    $user = auth()->user();
+    $fileName = 'attendance_user_' . $user->id . '_' .
+                ($start ? $start->toDateString() : 'from_start') . '_to_' .
+                ($end ? $end->toDateString() : 'now') . '.xlsx';
+
+    return Excel::download(new EmployeeAttendanceExport($user->id, $start, $end), $fileName);
+}
 }
