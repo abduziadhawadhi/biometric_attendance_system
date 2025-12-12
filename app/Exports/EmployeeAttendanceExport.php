@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Exports;
 
 use App\Models\Attendance;
@@ -18,13 +19,14 @@ class EmployeeAttendanceExport implements FromCollection, WithHeadings, ShouldAu
     public function __construct(int $employeeId, $start = null, $end = null)
     {
         $this->employeeId = $employeeId;
-        $this->start = $start;
-        $this->end = $end;
+        $this->start      = $start;
+        $this->end        = $end;
     }
 
     public function collection()
     {
-        $query = Attendance::where('employee_id', $this->employeeId);
+        $query = Attendance::with('employee')   // 👈 load employee relation
+            ->where('employee_id', $this->employeeId);
 
         if ($this->start) {
             $query->where('created_at', '>=', $this->start->toDateTimeString());
@@ -33,12 +35,12 @@ class EmployeeAttendanceExport implements FromCollection, WithHeadings, ShouldAu
             $query->where('created_at', '<=', $this->end->toDateTimeString());
         }
 
-        $rows = $query->orderBy('created_at', 'asc')->get()->map(function ($a) {
+        $rows = $query->orderBy('created_at', 'desc')->get()->map(function ($a) {
             // created_at is full timestamp: format to local tz
             $created = Carbon::parse($a->created_at)->setTimezone($this->tz);
 
             // attempt to show check_in/check_out as full datetimes if they contain date
-            $checkIn = $a->check_in;
+            $checkIn  = $a->check_in;
             $checkOut = $a->check_out;
 
             // If check_in is time-only (H:i:s), prefix created date
@@ -69,15 +71,15 @@ class EmployeeAttendanceExport implements FromCollection, WithHeadings, ShouldAu
             }
 
             return [
-                'Attendance ID' => $a->id,
-                'Date' => $created->toDateString(),
-                'Created At' => $created->toDateTimeString(),
-                'Check In' => $checkIn ?? '',
-                'Check Out' => $checkOut ?? '',
-                'Status' => $a->status,
-                'Late (min)' => $late,
+                'Employee Name' => optional($a->employee)->name ?? '',
+                'Date'          => $created->toDateString(),
+                'Created At'    => $created->toDateTimeString(),
+                'Check In'      => $checkIn ?? '',
+                'Check Out'     => $checkOut ?? '',
+                'Status'        => $a->status,
+                'Late (min)'    => $late,
                 'Overtime (min)' => $overtime,
-                'Notes' => $a->notes ?? '',
+                'Notes'         => $a->notes ?? '',
             ];
         });
 
@@ -88,7 +90,7 @@ class EmployeeAttendanceExport implements FromCollection, WithHeadings, ShouldAu
     public function headings(): array
     {
         return [
-            'Attendance ID',
+            'Employee Name',
             'Date',
             'Created At',
             'Check In',
