@@ -34,15 +34,24 @@
             z-index: 0;
         }
 
-        .login-container {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            padding: 15px;
-        }
+      .login-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: flex-end; /* 👈 move to right */
+    align-items: center;
+    width: 100%;
+    padding: 15px 60px; /* space from right edge */
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .login-container {
+        justify-content: center;
+        padding: 15px;
+    }
+}
+
 
         .login-card {
             background: rgba(255, 255, 255, 0.97);
